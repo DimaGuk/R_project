@@ -126,7 +126,7 @@
             Levels: A B C D E
 - ## Conclusion
 
-        Random Forest algorithm with tuning control method works best for our Weight Lifting exercise analysis.
+    Random Forest algorithm with tuning control method works best for our Weight Lifting exercise analysis.
 
 
 

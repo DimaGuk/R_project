@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://markable.in/static/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://markable.in//static/css/style.css" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="https://markable.in/static/editor/css/view_file.css">
+  <link rel="stylesheet" type="text/css" href="https://markable.in/static/css/code.css">
+</head>
+<body>
+  <div class="container">
+    <div id="content">
+      <h1 id="practical-machine-learning-weight-lifting-exercise-analysis">Practical Machine Learning - Weight Lifting Exercise Analysis</h1>
+<p>=======================================================================</p>
+<ul>
+<li>
+<h2 id="description">Description</h2>
+<p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement. A group of enthusiasts took measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.</p>
+<p>Goal of this project is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. Participants were asked to perform barbell lifts correctly and incorrectly in 5 different ways. This data was recorded at regular intervals. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).</p>
+</li>
+<li>
+<h2 id="goal">Goal</h2>
+<pre><code>Goal of the project is to fit a model with given training data set and predict classe variable of the testing data set.
+</code></pre>
+</li>
+<li>
+<h2 id="algorithms-testd-for-better-accuracy">Algorithms Testd For better accuracy</h2>
+<pre><code>To achieve the goal, I have trained models using diferent algorithms. After repeated trials and tuning process, for our dataset, I found RandomForest to be working best after applying tuning controls.
+</code></pre>
+</li>
+</ul>
+<hr />
+<ul>
+<li>
+<h2 id="step-1-cleaning-and-processing-data">Step 1: Cleaning and Processing Data</h2>
+<p>Imported pml-training.csv into workspace and assigned those values to train            variable. In further steps, I cleaned data by removing columns with NA's from          dataset. This is done to reduce the number of insignificant columns thereby            improving the processing time and accuracy.</p>
+<pre><code>train = read.csv("C:\\Users\\Administratorsha\\Desktop\\dima\\pml-training.csv", na.strings= c("NA",""," "))
+test = read.csv("C:\\Users\\Administratorsha\\Desktop\\dima\\pml-testing.csv", na.strings= c("NA",""," "))
+train_NAs &lt;- apply(train, 2, function(x) {sum(is.na(x))})
+train_new &lt;- train[,which(train_NAs &lt;=10)]
+train_new &lt;- na.omit(train_new)
+train_new &lt;- train_new[8:length(train_new)]
+</code></pre>
+</li>
+<li>
+<h2 id="step-2-data-partitioning-for-training-and-testing">Step 2: Data Partitioning for Training and Testing</h2>
+<pre><code>To make efficient model, we need to train our model with 70% of given test data. Once model is prepared, it is always good to test it with rest 30% data to cross validate the predicted values against already existing values.
+
+library(caret)
+inTrain &lt;- createDataPartition(y = train_new$classe, p = 0.7, list = FALSE)
+training &lt;- train_new[inTrain, ]
+crossVal &lt;- train_new[-inTrain, ]
+</code></pre>
+<p>I have used caret createDataPartition method in caret package to split data into two sections.</p>
+<ul>
+<li>Training data - 70% of pml-training.csv</li>
+<li>Testing data - 30% of pml-training.csv</li>
+</ul>
+<p>CreatedDataPartition functions gives indices of split data.</p>
+</li>
+<li>
+<h2 id="step-3-model-fitting">Step 3: Model Fitting</h2>
+<pre><code>I have used Random Forest as algorithm to get highest accuracy with available 60 predictor variables.
+
+library(randomForest)
+rf_model = randomForest(classe~.,data = training)
+rf_model
+
+Call:
+randomForest(formula = classe ~ ., data = training) 
+Type of random forest: classification
+Number of trees: 500
+No. of variables tried at each split: 7
+
+OOB estimate of  error rate: 0.51%
+Confusion matrix:
+A    B    C    D    E class.error
+A 3902    2    1    0    1 0.001024066
+B   13 2641    4    0    0 0.006395786
+C    0    9 2383    4    0 0.005425710
+D    0    0   26 2224    2 0.012433393
+E    0    0    3    5 2517 0.003168317
+</code></pre>
+</li>
+<li>
+<h2 id="step-4-cross-validation">Step 4: Cross Validation</h2>
+<pre><code>As we have splot the data into two sets, we have trained our model with training data. We have out model ready and we have to used rest 30% of data to test the model.
+</code></pre>
+<ul>
+<li>
+<h3 id="predict">Predict</h3>
+<p>Once we have final testing data set, I have used Predict() function to predict the Classe variable of the testing data set</p>
+<pre><code>predCrossVal &lt;- predict(rf_model, crossVal)
+- ### Viewing Predicted Values:
+</code></pre>
+<p>Below code shows predicted values in a tabular format.</p>
+<pre><code>View(predCrossVal);
+- ### Accuracy of predictions:
+</code></pre>
+<p>As expected the predictions are not correct in all cases. We can calculate the accuracy of the prediction:</p>
+<pre><code>postResample(crossVal$classe, predCrossVal)
+Accuracy     Kappa 
+0.9945624 0.9931215
+</code></pre>
+</li>
+<li>
+<h3 id="expected-out-of-sample-error">Expected out of sample error</h3>
+<pre><code>We can calculate the expected out of sample error based on the test set that we created for cross-validation:
+
+confusionMatrix(predictedValues, testData$classe)
+Confusion Matrix and Statistics
+
+Reference
+Prediction    
+    A    B    C    D    E
+    A 1671    3    0    0    0
+    B    8 1126    5    0    0
+    C    0    5 1021    0    0
+    D    0    0    6  957    1
+    E    0    0    1    3 1078
+
+Overall Statistics
+
+Accuracy : 0.9946          
+    95% CI : (0.9923, 0.9963)
+No Information Rate : 0.2853          
+P-Value [Acc &gt; NIR] : &lt; 2.2e-16
+
+      Kappa : 0.9931          
+Mcnemar's Test P-Value : NA
+
+Statistics by Class:
+
+                        Class: A Class: B Class: C Class: D Class: E
+Sensitivity            0.9952   0.9929   0.9884   0.9969   0.9991
+Specificity            0.9993   0.9973   0.9990   0.9986   0.9992
+Pos Pred Value         0.9982   0.9886   0.9951   0.9927   0.9963
+Neg Pred Value         0.9981   0.9983   0.9975   0.9994   0.9998
+Prevalence             0.2853   0.1927   0.1755   0.1631   0.1833
+Detection Rate         0.2839   0.1913   0.1735   0.1626   0.1832
+Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
+Balanced Accuracy      0.9973   0.9951   0.9937   0.9977   0.9991
+</code></pre>
+</li>
+</ul>
+<p>Note: The confusionMatrix function from the Caret package does provide all the information that we calculated 'by hand' in the first part of the Cross-validation. It shows that both methods provide the same answer.</p>
+</li>
+<li>
+<h2 id="20-case-test-set-predictions">20 case test set predictions</h2>
+<pre><code>    Now we use our model to predict the 20 test data
+
+    predictTest &lt;- predict(rf_model, test)
+    predictTest
+     1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 
+     B  A  B  A  A  E  D  B  A  A  B  C  B  A  E  E  A  B  B  B 
+    Levels: A B C D E
+</code></pre>
+</li>
+<li>
+<h2 id="conclusion">Conclusion</h2>
+<p>Random Forest algorithm with tuning control method works best for our Weight Lifting exercise analysis.</p>
+</li>
+</ul>
+    </div>
+  </div>
+</body>
+</html>
